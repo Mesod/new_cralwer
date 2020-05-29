@@ -3,19 +3,18 @@ import scrapy
 from scrapy import Request
 
 
-class DigiatoSpider(scrapy.Spider):
-    name = 'digiato'
-    allowed_domains = ['digiato.com']
-    start_urls = ['https://digiato.com/topic/mobile/',
-                  #   'https://digiato.com/topic/business/',
-                  #   'https://digiato.com/topic/game/',
-                  #   'https://digiato.com/topic/science/',
-                  ]
+
+class ZoomitSpider(scrapy.Spider):
+    name = 'zoomit'
+    allowed_domains = ['zoomit.ir']
+    start_urls = [
+        'https://www.zoomit.ir/category/mobile/',
+    ]
     labels = ['mobile', 'business', 'game', 'science']
 
     def parse(self, response):
         label = self.find_label(response.url)
-        articles = response.css('article a')
+        articles = response.css('.catlist__post-title')
         unique_links = []
         for article in articles:
             link = article.css('a::attr(href)').get()
@@ -29,11 +28,16 @@ class DigiatoSpider(scrapy.Spider):
                     'source': self.name,
                 }
 
-        next_page = response.css('.next-page > a::attr(href)').get()
+        next_page = response.css(
+            '.pagination > li:nth-child(7) > a:nth-child(1) > .icon-angle-left')\
+            .get()
         if next_page:
-            print(f'found next page. crawling {next_page}')
+            next_page_url = response.css(
+                '.pagination > li:nth-child(7) > a:nth-child(1)::attr(href)')\
+                .get()
+            print(f'found next page. crawling {next_page_url}')
             yield Request(
-                url=next_page,
+                url=next_page_url,
                 callback=self.parse,
             )
 
